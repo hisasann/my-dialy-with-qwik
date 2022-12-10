@@ -1,138 +1,63 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useServerMount$, useClientMount$, useStore } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 
+// https://qwik.builder.io/docs/components/events/
+export const Counter = component$(() => {
+  const store = useStore({ count: 0 });
+
+  return <button onClick$={() => store.count++}>{store.count}</button>;
+});
+
 export default component$(() => {
+  const github = useStore({
+    org: 'BuilderIO',
+    repos: null as string[] | null,
+  });
+
+  // SSR
+  useServerMount$(async () => {
+    // Put code here to fetch data from the server.
+    github.repos = await getRepositories('hisasann');
+    console.log('ssr');
+  });
+
+  useClientMount$(() => {
+    // This code will ONLY run once in the browser, when the component is mounted
+    console.log('csr');
+  });
+
   return (
     <div>
-      <h1>
-        Welcome to Qwik <span class="lightning">⚡️</span>
-      </h1>
-
-      <ul>
-        <li>
-          Check out the <code>src/routes</code> directory to get started.
-        </li>
-        <li>
-          Add integrations with <code>npm run qwik add</code>.
-        </li>
-        <li>
-          More info about development in <code>README.md</code>
-        </li>
-      </ul>
-
-      <h2>Commands</h2>
-
-      <table class="commands">
-        <tr>
-          <td>
-            <code>npm run dev</code>
-          </td>
-          <td>Start the dev server and watch for changes.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run preview</code>
-          </td>
-          <td>Production build and start preview server.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run build</code>
-          </td>
-          <td>Production build.</td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run qwik add</code>
-          </td>
-          <td>Select an integration to add.</td>
-        </tr>
-      </table>
-
-      <h2>Add Integrations</h2>
-
-      <table class="commands">
-        <tr>
-          <td>
-            <code>npm run qwik add cloudflare-pages</code>
-          </td>
-          <td>
-            <a href="https://developers.cloudflare.com/pages" target="_blank">
-              Cloudflare Pages Server
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run qwik add express</code>
-          </td>
-          <td>
-            <a href="https://expressjs.com/" target="_blank">
-              Nodejs Express Server
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run qwik add netlify-edge</code>
-          </td>
-          <td>
-            <a href="https://docs.netlify.com/" target="_blank">
-              Netlify Edge Functions
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <code>npm run qwik add static</code>
-          </td>
-          <td>
-            <a
-              href="https://qwik.builder.io/qwikcity/static-site-generation/overview/"
-              target="_blank"
-            >
-              Static Site Generation (SSG)
-            </a>
-          </td>
-        </tr>
-      </table>
-
-      <h2>Community</h2>
-
-      <ul>
-        <li>
-          <span>Questions or just want to say hi? </span>
-          <a href="https://qwik.builder.io/chat" target="_blank">
-            Chat on discord!
-          </a>
-        </li>
-        <li>
-          <span>Follow </span>
-          <a href="https://twitter.com/QwikDev" target="_blank">
-            @QwikDev
-          </a>
-          <span> on Twitter</span>
-        </li>
-        <li>
-          <span>Open issues and contribute on </span>
-          <a href="https://github.com/BuilderIO/qwik" target="_blank">
-            GitHub
-          </a>
-        </li>
-        <li>
-          <span>Watch </span>
-          <a href="https://qwik.builder.io/media/" target="_blank">
-            Presentations, Podcasts, Videos, etc.
-          </a>
-        </li>
-      </ul>
+      <Counter />
+      <span>GitHub username: {github.org}</span>
+      <div>
+        {github.repos ? (
+          <ul>
+            {github.repos.map((repo) => (
+              <li>
+                <a href={`https://github.com/${github.org}/${repo}`}>{repo}</a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          'loading...'
+        )}
+      </div>
       <Link class="mindblow" href="/flower/">
         Blow my mind 🤯
       </Link>
     </div>
   );
 });
+
+export async function getRepositories(username: string, controller?: AbortController) {
+  const resp = await fetch(`https://api.github.com/users/${username}/repos`, {
+    signal: controller?.signal,
+  });
+  const json = await resp.json();
+  return Array.isArray(json) ? json.map((repo: { name: string }) => repo.name) : null;
+};
 
 export const head: DocumentHead = {
   title: 'Welcome to Qwik',
