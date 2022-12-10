@@ -57,7 +57,7 @@ export async function getRepositories(username: string, controller?: AbortContro
   });
   const json = await resp.json();
   return Array.isArray(json) ? json.map((repo: { name: string }) => repo.name) : null;
-};
+}
 
 export const head: DocumentHead = {
   title: 'Welcome to Qwik',
