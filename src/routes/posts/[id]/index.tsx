@@ -2,25 +2,24 @@ import { component$, Resource } from "@builder.io/qwik";
 import {
   DocumentHead,
   RequestHandler,
-  StaticGenerateHandler,
   useEndpoint,
 } from "@builder.io/qwik-city";
-import { getPost, getPostList, Post } from "~/lib/client";
+import { getPost, Post } from "~/lib/client";
 
 export const onGet: RequestHandler<Post> = async ({ params }) => {
   const data = await getPost(params.id);
   return data;
 };
 
-export const onStaticGenerate: StaticGenerateHandler = async () => {
-  const data = await getPostList();
-  const ids = data.contents.map((post) => post.id);
-  return {
-    params: ids.map((id) => {
-      return { id };
-    }),
-  };
-};
+// export const onStaticGenerate: StaticGenerateHandler = async () => {
+//   const data = await getPostList();
+//   const ids = data.contents.map((post) => post.id);
+//   return {
+//     params: ids.map((id) => {
+//       return { id };
+//     }),
+//   };
+// };
 
 export const head: DocumentHead<Post> = ({ data }) => {
   return {
